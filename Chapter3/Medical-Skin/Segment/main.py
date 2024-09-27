@@ -5,6 +5,10 @@ import torch
 from models import get_model
 import matplotlib.pyplot as plt
 from utils import Metrics
+import torchvision.utils as vutils  
+from PIL import Image  
+import os
+import numpy as np
 
 def train_one_epoch(train_dataloder, model, optimizer, criterion, args):
     ### Training ###  
@@ -20,7 +24,7 @@ def train_one_epoch(train_dataloder, model, optimizer, criterion, args):
         loss = criterion.loss(outputs, batch_labels)  
         loss.backward()  
         optimizer.step()  
-        dsc = criterion.dsc(outputs, batch_labels) 
+        dsc = criterion.dsc(outputs.detach(), batch_labels.detach()) 
         total_loss += loss.item()  
         total_dsc  += dsc.item() 
     # 计算平均损失  
@@ -43,7 +47,6 @@ def validate_one_epoch(val_dataloader, model, criterion, args):
             total_loss += loss.item()  
             total_dsc  += dsc.item()
 
-        
         # 计算平均损失  
         avg_loss = total_loss / len(val_dataloader) 
         avg_dsc = total_dsc / len(val_dataloader)   
@@ -73,7 +76,7 @@ def main(train_dataloader, val_dataloader, test_dataloader, args):
         val_dscs.append(val_dsc)
 
         # 打印统计信息
-        print(f'第 {epoch+1} / {args.epoch} 轮 - train_loss: {train_loss:.4f}, train_acc: {train_dsc:.4f}, val_loss: {val_loss:.4f}, val_acc: {val_dsc:.4f}')
+        print(f'第 {epoch+1} / {args.epoch} 轮 - train_loss: {train_loss:.4f}, train_dsc: {train_dsc:.4f}, val_loss: {val_loss:.4f}, val_dsc: {val_dsc:.4f}')
         # 保存验证集上表现最好的模型
         if val_dsc > best_val_dsc:
             best_val_dsc = val_dsc
@@ -90,30 +93,31 @@ def main(train_dataloader, val_dataloader, test_dataloader, args):
 
 
 
-    # 绘制损失和准确率的折线图
-    # epochs = range(1, args.epoch + 1)
+    #绘制损失和准确率的折线图
+    epochs = range(1, args.epoch + 1)
 
-    # plt.figure(figsize=(12, 5))
+    plt.figure(figsize=(12, 5))
 
-    # plt.subplot(1, 2, 1)
-    # plt.plot(epochs, train_losses, label='Training Loss', linewidth=2)
-    # plt.plot(epochs, val_losses, label='Validation Loss', linewidth=2)
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Loss')
-    # plt.legend()
-    # plt.title('Training and Validation Loss')
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, train_losses, label='Training Loss', linewidth=2)
+    plt.plot(epochs, val_losses, label='Validation Loss', linewidth=2)
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.title('Training and Validation Loss')
 
-    # plt.subplot(1, 2, 2)
-    # plt.plot(epochs, train_accuracies, label='Training Accuracy', linewidth=2)
-    # plt.plot(epochs, val_accuracies, label='Validation Accuracy', linewidth=2)
-    # plt.xlabel('Epochs')
-    # plt.ylabel('Accuracy')
-    # plt.legend()
-    # plt.title('Training and Validation Accuracy')
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, train_dscs, label='Training Dice', linewidth=2)
+    plt.plot(epochs, val_dscs, label='Validation Dice', linewidth=2)
+    plt.xlabel('Epochs')
+    plt.ylabel('Dice')
+    plt.legend()
+    plt.title('Training and Validation Dice')
 
-    # plt.tight_layout()
-    # plt.show()
-    # plt.savefig("result.png")
+    plt.tight_layout()
+    plt.savefig(f'results.png', dpi=600, bbox_inches='tight')
+    plt.show()
+
 
 if __name__ == "__main__":
     from datasets import  get_DataLoader
@@ -126,7 +130,7 @@ if __name__ == "__main__":
     if system_name == "Windows":
         ROOT = "D:\data\ISIC2018"
     else:
-        ROOT = "/home/maojunbin/data/ISIC2018"
+        ROOT = "/home/mjb/data/ISIC2018/"
     train_dataloader, val_dataloader, test_dataloader = get_DataLoader(ROOT, opt.args)
     main(train_dataloader, val_dataloader, test_dataloader, opt.args)
     print("finish")

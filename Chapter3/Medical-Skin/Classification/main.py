@@ -57,8 +57,9 @@ def validate_one_epoch(val_dataloader, model, criterion, args):
     total_loss = 0.0  
     predictions = []  
     labels = []  
-    with torch.no_grad():  # 禁用梯度计算，节省内存和计算资源  
-        for batch_data, batch_labels in val_dataloader:  
+    with torch.no_grad():  # 禁用梯度计算，节省内存和计算资源
+        progress_bar = tqdm(val_dataloader, desc="Validation", leave=False)  
+        for batch_data, batch_labels in progress_bar:  
             batch_data, batch_labels = batch_data.to(args.device), batch_labels.to(args.device)  
             outputs = model(batch_data)  # 获取预测输出  
             loss = criterion(outputs, batch_labels)  # 计算损失  
@@ -66,15 +67,15 @@ def validate_one_epoch(val_dataloader, model, criterion, args):
             labels.append(batch_labels.cpu())  
             total_loss += loss.item()  
           
-        # 将整个epoch的预测和标签转换为单个tensor  
-        predictions = torch.cat(predictions, dim=0)  
-        labels = torch.cat(labels, dim=0)  
-          
-        # 计算准确率  
-        accuracy = calculate_accuracy(predictions, labels)  
-        # 计算平均损失  
-        avg_loss = total_loss / len(val_dataloader)  
-        return accuracy, avg_loss  
+    # 将整个epoch的预测和标签转换为单个tensor  
+    predictions = torch.cat(predictions, dim=0)  
+    labels = torch.cat(labels, dim=0)  
+        
+    # 计算准确率  
+    accuracy = calculate_accuracy(predictions, labels)  
+    # 计算平均损失  
+    avg_loss = total_loss / len(val_dataloader)  
+    return accuracy, avg_loss  
 
 def main(train_dataloader, val_dataloader, test_dataloader, args):
 

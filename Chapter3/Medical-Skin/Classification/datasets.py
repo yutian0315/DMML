@@ -8,24 +8,22 @@ import torch
 
 class SkinClassDataset(Dataset):
     def __init__(self, GroundTruth_PATH, Input_PATH, transform=None):
-        self.groundtruth = pd.read_csv(GroundTruth_PATH)
-        self.input_path = Input_PATH
-        self.transform = transform
-        self.label = self.groundtruth.iloc[:, 1:].values.tolist() 
+        self.groundtruth = pd.read_csv(GroundTruth_PATH) # 读取CSV文件，存储图像名称和对应的标签
+        self.input_path = Input_PATH # 输入图像文件夹的路径
+        self.transform = transform # 图像变换操作
+        self.label = self.groundtruth.iloc[:, 1:].values.tolist() # 获取标签列表，假设标签在CSV文件的第2列及之后的列中
 
     def __len__(self):
         return len(self.groundtruth)
 
     def __getitem__(self, index):
-        image_name = self.groundtruth['image'].iloc[index]
-        image_path = os.path.join(self.input_path, image_name+'.jpg')
-        image = Image.open(image_path)
-        label = self.label[index]
-
+        image_name = self.groundtruth['image'].iloc[index] # 获取图像的文件名
+        image_path = os.path.join(self.input_path, image_name+'.jpg') # 构建图像的完整路径
+        image = Image.open(image_path) # 打开图像
+        label = self.label[index]  # 获取对应的标签
         if self.transform:
-            image = self.transform(image)
-
-        label = torch.tensor(label)
+            image = self.transform(image)  # 对图像进行变换
+        label = torch.tensor(label) # 将标签转换为Tensor
         return image, label
 
 def get_DataLoader(ROOT_PATH, args): # 创建数据读取器 DataLoader
@@ -63,6 +61,7 @@ def get_DataLoader(ROOT_PATH, args): # 创建数据读取器 DataLoader
     test_dataloder = DataLoader(dataset=test_dataset, batch_size=args.batch_size, num_workers=args.num_workers, shuffle=False)
 
     return train_dataloder, val_dataloder, test_dataloder
+
 if __name__ == "__main__":
     from config import OptInit
     from tqdm import tqdm

@@ -89,7 +89,7 @@ def get_DataLoader(ROOT_PATH, args): # 创建数据读取器 DataLoader
     test_dataset = SkinSegDataset(images_dir=test_input, labels_dir=test_label, data_transform=test_data_transform)
     
     # 创建数据读取器
-    train_dataloder = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+    train_dataloder = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, drop_last=True)
     val_dataloder = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     test_dataloder = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 

@@ -4,7 +4,6 @@ import torch
 import segmentation_models_pytorch as smp
 
 def get_model(args):
-
     model = smp.Unet(
             encoder_name="resnet18",        # Choose encoder, e.g. mobilenet_v2 or efficientnet-b7
             decoder_channels=[16, 32, 64, 128, 256],

@@ -5,16 +5,15 @@ import random
 
 class OptInit():
     def __init__(self):
-        parser = argparse.ArgumentParser(description='PyTorch implementation of DeepLearning')
+        parser = argparse.ArgumentParser(description='PyTorch implementation of SkinSegment')
         parser.add_argument('--lr', default=0.0001, type=float, help='initial learning rate')
         parser.add_argument('--wd', default=0.0001, type=float, help='initial weight decay')
         parser.add_argument('--epoch', default=10, type=int, help='number of epochs for training')
         parser.add_argument('--num_class', default=7, type=int, help='number of class')
-        parser.add_argument('--resize', default=224, type=int, help='number of class')
-        parser.add_argument('--num_workers', default=4, type=int, help='number of class')
+        parser.add_argument('--resize', default=224, type=int, help='number of resize')
+        parser.add_argument('--num_workers', default=4, type=int, help='number of num_workers')
         parser.add_argument('--batch_size', default=128, type=int, help='number of batch_size')
         parser.add_argument('--seed', type=int, default=2024, help='random seed to set')
-
         args = parser.parse_args()
         args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.args = args
