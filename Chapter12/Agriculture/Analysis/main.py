@@ -23,18 +23,18 @@ def main():
     data = load_data()
 
     logging.info("预处理数据")
-    X, y, preprocessor = preprocess_data(data)
+    x, y, preprocessor = preprocess_data(data)
 
     # 3. 划分训练集和测试集，并进行SMOTE
     logging.info("划分训练集和测试集，并应用SMOTE")
-    X_train, X_test, y_train, y_test = split_and_resample(X, y)
+    x_train, x_test, y_train, y_test = split_and_resample(x, y)
 
-    logging.info(f"训练集大小: {X_train.shape}, 测试集大小: {X_test.shape}")
+    logging.info(f"训练集大小: {x_train.shape}, 测试集大小: {x_test.shape}")
     logging.info(f"训练集类别分布:\n{pd.Series(y_train).value_counts()}")
 
     # 4. 构建模型
     logging.info("构建模型")
-    input_dim = X_train.shape[1]
+    input_dim = x_train.shape[1]
     model = build_autoencoder_with_classifier(
         input_dim=input_dim,
         encoding_dim=config.ENCODING_DIM,
@@ -46,9 +46,9 @@ def main():
     # 5. 训练模型
     logging.info("开始训练模型")
     history = model.fit(
-        X_train,
+        x_train,
         {
-            "reconstruction": X_train,
+            "reconstruction": x_train,
             "classification": y_train
         },
         epochs=config.EPOCHS,
@@ -64,7 +64,7 @@ def main():
 
     # 7. 评估模型
     logging.info("评估模型")
-    reconstruction_pred, classification_pred = model.predict(X_test)
+    reconstruction_pred, classification_pred = model.predict(x_test)
     threshold = 0.69
     y_pred = (classification_pred.ravel() > threshold).astype(int)
 
@@ -93,10 +93,9 @@ def main():
 
     plot_precision_recall(thresholds, precision_list, recall_list)
 
-    # 9. 特征敏感度分析（调用修改后的方法）
+    # 9. 特征敏感度分析
     logging.info("开始特征敏感度分析")
     perform_feature_sensitivity_analysis(0.69)
-
     logging.info("项目运行结束")
 
 

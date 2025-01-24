@@ -18,7 +18,7 @@ def load_data():
 
 def preprocess_data(data):
     """数据预处理：填充、标准化、编码"""
-    X = data.drop(['ID', 'Crop_Damage'], axis=1)
+    x = data.drop(['ID', 'Crop_Damage'], axis=1)
     y = data['Crop_Damage']
 
     numeric_features = config.NUMERIC_FEATURES
@@ -45,15 +45,15 @@ def preprocess_data(data):
     )
 
     # 预处理
-    X_processed = preprocessor.fit_transform(X)
+    x_processed = preprocessor.fit_transform(x)
 
-    return X_processed, y, preprocessor
+    return x_processed, y, preprocessor
 
-# 只填补缺失值，不搞独热编码
 
+# 只填补缺失值，不进行独热编码
 def preprocess_data_pure(data):
-    """数据预处理：填充、标准化、编码"""
-    X = data.drop(['ID', 'Crop_Damage'], axis=1)
+    """数据预处理：填充、标准化"""
+    x = data.drop(['ID', 'Crop_Damage'], axis=1)
     y = data['Crop_Damage']
 
     numeric_features = config.NUMERIC_FEATURES
@@ -65,7 +65,7 @@ def preprocess_data_pure(data):
         ('scaler', StandardScaler())
     ])
 
-    # 分类管道：众数填充 + OneHot
+    # 分类管道：众数填充
     categorical_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='most_frequent')),
     ])
@@ -79,18 +79,18 @@ def preprocess_data_pure(data):
     )
 
     # 预处理
-    X_processed = preprocessor.fit_transform(X)
+    x_processed = preprocessor.fit_transform(x)
 
-    return X_processed, y
+    return x_processed, y
 
 
-def split_and_resample(X, y):
+def split_and_resample(x, y):
     """划分训练集和测试集，并使用 SMOTE 进行过采样"""
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.2, random_state=42, stratify=y
     )
 
     sm = SMOTE(random_state=42)
-    X_train_resampled, y_train_resampled = sm.fit_resample(X_train, y_train)
+    x_train_resampled, y_train_resampled = sm.fit_resample(x_train, y_train)
 
-    return X_train_resampled, X_test, y_train_resampled, y_test
+    return x_train_resampled, x_test, y_train_resampled, y_test

@@ -48,8 +48,6 @@ def plot_precision_recall(thresholds, precision, recall):
     plt.plot(thresholds, recall, label='召回率', linestyle='--', color='r')
     plt.xlabel('阈值')
     plt.ylabel('得分')
-    # 移除标题
-    # plt.title('精准率和召回率随阈值变化的曲线')
     plt.legend()
     plt.grid(True)
     # 调整横坐标格式，确保清晰显示
@@ -59,74 +57,10 @@ def plot_precision_recall(thresholds, precision, recall):
     plt.show()
 
 
-def plot_feature_sensitivity(metrics, numeric_features, feature_name_map):
-    """绘制特征敏感度分析的各种曲线并保存为 PDF"""
-    line_styles = ['-', '--', '-.', ':']
-    if len(numeric_features) > len(line_styles):
-        # 如果特征数量超过线条样式数量，则重复使用线条样式
-        line_styles = line_styles * (len(numeric_features) // len(line_styles) + 1)
-
-    # 绘制均值重构误差变化曲线
-    plt.figure(figsize=(14, 6))
-    for idx, feature in enumerate(numeric_features):
-        plt.plot(metrics[feature]['percent'], metrics[feature]['mean_error'],
-                 linestyle=line_styles[idx], label=feature_name_map[feature])
-    plt.xlabel('扰动百分比 (%)')
-    plt.ylabel('均值重构误差')
-    plt.legend(title='特征')
-    plt.grid(True)
-    plt.gca().xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x:.0f}%'))
-    plt.savefig("mean_reconstruction_error.pdf", format="pdf", bbox_inches="tight")  # 保存为 PDF
-    plt.show()
-
-    # 绘制重构误差方差变化曲线
-    plt.figure(figsize=(14, 6))
-    for idx, feature in enumerate(numeric_features):
-        plt.plot(metrics[feature]['percent'], metrics[feature]['variance_error'],
-                 linestyle=line_styles[idx], label=feature_name_map[feature])
-    plt.xlabel('扰动百分比 (%)')
-    plt.ylabel('重构误差方差')
-    plt.legend(title='特征')
-    plt.grid(True)
-    plt.gca().xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x:.0f}%'))
-    plt.savefig("variance_reconstruction_error.pdf", format="pdf", bbox_inches="tight")  # 保存为 PDF
-    plt.show()
-
-    # 绘制异常样本数量变化曲线
-    plt.figure(figsize=(14, 6))
-    for idx, feature in enumerate(numeric_features):
-        plt.plot(metrics[feature]['percent'], metrics[feature]['num_anomalous'],
-                 linestyle=line_styles[idx], label=feature_name_map[feature])
-    plt.xlabel('扰动百分比 (%)')
-    plt.ylabel('异常样本数量')
-    plt.legend(title='特征')
-    plt.grid(True)
-    plt.gca().xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x:.0f}%'))
-    plt.savefig("num_anomalous_samples.pdf", format="pdf", bbox_inches="tight")  # 保存为 PDF
-    plt.show()
-
-    # 绘制最大值和最小值变化曲线
-    plt.figure(figsize=(14, 6))
-    for idx, feature in enumerate(numeric_features):
-        plt.plot(metrics[feature]['percent'], metrics[feature]['max_error'],
-                 linestyle=line_styles[idx], label=f"{feature_name_map[feature]} - 最大值")
-        plt.plot(metrics[feature]['percent'], metrics[feature]['min_error'],
-                 linestyle=line_styles[idx], label=f"{feature_name_map[feature]} - 最小值")
-    plt.xlabel('扰动百分比 (%)')
-    plt.ylabel('重构误差 (最大值/最小值)')
-    plt.legend(title='特征')
-    plt.grid(True)
-    plt.gca().xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{x:.0f}%'))
-    plt.savefig("max_min_reconstruction_error.pdf", format="pdf", bbox_inches="tight")  # 保存为 PDF
-    plt.show()
-
-
 def perform_feature_sensitivity_analysis(threshold):
     """执行特征敏感度分析"""
     # 获取所有特征（包括数值和类别特征）
     all_features = config.NUMERIC_FEATURES + config.CATEGORICAL_FEATURES
-    feature_name_map = config.FEATURE_NAME_MAP
-    perturbation_percentages = config.PERTURBATION_PERCENTAGES
 
     # 存储每个特征的变化数据
     feature_impact_auc_all = {feature: [] for feature in all_features}
@@ -147,11 +81,10 @@ def perform_feature_sensitivity_analysis(threshold):
         # 1. 划分数据集
         original_data = load_data()
         # 获取没有独热编码但是填补了缺失值的训练集和测试集
-        X, y = preprocess_data_pure(original_data)
+        x, y = preprocess_data_pure(original_data)
+        x_train_old, x_test_old, y_train, y_test = split_and_resample(x, y)
 
-        X_train_old, X_test_old, y_train, y_test = split_and_resample(X, y)
-
-        # 真正的训练集和测试集需要保证搞了独热编码
+        # 真正的训练集和测试集需要保证进行了独热编码
         numeric_features = config.NUMERIC_FEATURES
         categorical_features = config.CATEGORICAL_FEATURES
 
@@ -173,25 +106,25 @@ def perform_feature_sensitivity_analysis(threshold):
                 ('cat', categorical_transformer, categorical_features)
             ]
         )
-        X_train_df = pd.DataFrame(X_train_old, columns=config.NUMERIC_FEATURES + config.CATEGORICAL_FEATURES)
-        X_test_df = pd.DataFrame(X_test_old, columns=config.NUMERIC_FEATURES + config.CATEGORICAL_FEATURES)
+        x_train_df = pd.DataFrame(x_train_old, columns=config.NUMERIC_FEATURES + config.CATEGORICAL_FEATURES)
+        x_test_df = pd.DataFrame(x_test_old, columns=config.NUMERIC_FEATURES + config.CATEGORICAL_FEATURES)
 
         # 预处理
-        X_train = preprocessor.fit_transform(X_train_df)  # 这个是终极可以用的数据
-        X_test = preprocessor.fit_transform(X_test_df)  # 这个是终极可以用的数据
+        x_train = preprocessor.fit_transform(x_train_df)  # 这个是终极可以用的数据
+        x_test = preprocessor.fit_transform(x_test_df)  # 这个是终极可以用的数据
 
         # 2. 训练一个新的模型，使用预处理后的数据
         logging.info("训练新模型...")
-        model = build_autoencoder_with_classifier(input_dim=X_train.shape[1],
+        model = build_autoencoder_with_classifier(input_dim=x_train.shape[1],
                                                   encoding_dim=config.ENCODING_DIM,
                                                   classification_loss_weight=config.CLASSIFICATION_LOSS_WEIGHT)
 
         # 原始数据训练模型
-        model.fit(X_train, {'reconstruction': X_train, 'classification': y_train},
+        model.fit(x_train, {'reconstruction': x_train, 'classification': y_train},
                   epochs=config.EPOCHS, batch_size=config.BATCH_SIZE)
 
         # 3. 使用模型对测试集进行预测
-        reconstruction_pred_original, classification_pred_original = model.predict(X_test)
+        reconstruction_pred_original, classification_pred_original = model.predict(x_test)
         y_pred_original = (classification_pred_original.ravel() > threshold).astype(int)
         auc_original = roc_auc_score(y_test, classification_pred_original.ravel())
         auprc_original = average_precision_score(y_test, classification_pred_original.ravel())
@@ -203,12 +136,12 @@ def perform_feature_sensitivity_analysis(threshold):
         # 对每个特征进行扰动并记录其影响
         for feature in all_features:
             # 扰动当前特征的值（在原始数据上打乱）
-            X_test_perturbed = X_test_df.copy()
-            X_test_perturbed[feature] = np.random.permutation(X_test_perturbed[feature].values)
+            x_test_perturbed = x_test_df.copy()
+            x_test_perturbed[feature] = np.random.permutation(x_test_perturbed[feature].values)
             # 对扰动后的数据进行预处理（只在扰动分析时才预处理）
-            X_test_processed_perturbed = preprocessor.transform(X_test_perturbed)
+            x_test_processed_perturbed = preprocessor.transform(x_test_perturbed)
             # 使用模型对扰动后的数据进行预测
-            reconstruction_pred_perturbed, classification_pred_perturbed = model.predict(X_test_processed_perturbed)
+            reconstruction_pred_perturbed, classification_pred_perturbed = model.predict(x_test_processed_perturbed)
             # 计算打乱后的 AUC 和 AUPRC
             auc_perturbed = roc_auc_score(y_test, classification_pred_perturbed.ravel())
             auprc_perturbed = average_precision_score(y_test, classification_pred_perturbed.ravel())

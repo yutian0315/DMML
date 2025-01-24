@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
 # 设置绘图字体为中文
 plt.rcParams['font.family'] = 'SimHei'
